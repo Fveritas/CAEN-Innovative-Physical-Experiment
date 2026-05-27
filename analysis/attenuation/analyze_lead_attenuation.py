@@ -47,15 +47,15 @@ for filename, config in files.items():
             area2 = tree["area2"].array(library="np")
 
             total_events = len(area)
-          area_cut = area > area_threshold
+            area_cut = area > area_threshold
             area2_cut = area2 > area2_threshold
             coincidence_cut = area_cut & area2_cut
 
-       n_area = np.sum(area_cut)
+            n_area = np.sum(area_cut)
             n_area2 = np.sum(area2_cut)
             n_coincidence = np.sum(coincidence_cut)
 
-          results.append({
+            results.append({
              'filename': filename,
                 'n_plates': config['n_plates'],
                 'thickness_mm': config['thickness_mm'],
