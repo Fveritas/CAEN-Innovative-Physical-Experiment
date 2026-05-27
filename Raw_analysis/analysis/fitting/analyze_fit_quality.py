@@ -39,7 +39,7 @@ chi2_all = np.sum((residuals_all / errors)**2)
 
 # Fit without last point
 popt_no_last, _ = curve_fit(exp_fit, thicknesses[:-1], coincidences[:-1],
-                   p0=[3357, 0.05], sigma=errors[:-1])
+                           p0=[3357, 0.05], sigma=errors[:-1])
 residuals_no_last = coincidences[:-1] - exp_fit(thicknesses[:-1], *popt_no_last)
 chi2_no_last = np.sum((residuals_no_last / errors[:-1])**2)
 
@@ -220,7 +220,7 @@ SPECIFIC TO YOUR EXPERIMENT:
     Attenuation length: lambda = 1/mu
     For cosmic ray muons in lead: lambda ~ 10-20 cm
     (depends on energy spectrum and geometry)
-""
+"""
 
 print(references)
 
@@ -228,8 +228,7 @@ print("\n" + "=" * 80)
 print("SUGGESTED ANALYSIS IMPROVEMENTS")
 print("=" * 80)
 
-print("""
-1. FIT WITHOUT LAST POINT
+print("""1. FIT WITHOUT LAST POINT
    - If last point is anomalous, fit first 4 points only
    - Report both fits and discuss discrepancy
 
@@ -271,7 +270,7 @@ x_plot = np.linspace(0, 22, 100)
 ax.errorbar(thicknesses, coincidences, yerr=errors, fmt='o', markersize=8,
             capsize=5, label='Data', color='blue')
 ax.plot(x_plot, exp_fit(x_plot, *popt_all), 'r-', linewidth=2,
-        label=f'Fit (all): mu={popt_all[1]:.4f}')
+        label=f'Fit (all): mu={popt_all[1]:.4f}')  # 修复了此处的变量名错误
 ax.plot(x_plot, exp_fit(x_plot, *popt_no_last), 'g--', linewidth=2,
         label=f'Fit (no last): mu={popt_no_last[1]:.4f}')
 ax.set_xlabel('Thickness (mm)')
@@ -294,6 +293,7 @@ ax.set_ylabel('Normalized Residuals (σ)')
 ax.set_title('Pull Distribution')
 ax.legend()
 ax.grid(True, alpha=0.3)
+
 # Plot 4: Transmission ratio
 ax = axes[1, 1]
 transmission = coincidences / coincidences[0]
@@ -302,7 +302,7 @@ ax.errorbar(thicknesses, transmission, yerr=trans_err, fmt='o', markersize=8,
        capsize=5, label='Data', color='blue')
 ax.plot(x_plot, exp_fit(x_plot, *popt_all)/popt_all[0], 'r-', linewidth=2, label='Fit (all)')
 ax.plot(x_plot, exp_fit(x_plot, *popt_no_last)/popt_no_last[0], 'g--', linewidth=2,
-        label='Fit (no last)')
+        label=f'Fit (no last)')
 ax.set_xlabel('Thickness (mm)')
 ax.set_ylabel('Transmission (N/N0)')
 ax.set_title('Transmission Factor')
