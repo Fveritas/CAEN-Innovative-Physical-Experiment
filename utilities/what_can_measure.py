@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""
+Analyze what can be measured with current data setup.
+"""
+
+print("=" * 80)
+print("WHAT CAN YOUR CURRENT DATA MEASURE?")
+print("=" * 80)
+
+print("\n✓ 1. COSMIC RAY COUNTING - EXCELLENT")
+print("-" * 80)
+print("Your data is PERFECT for:")
+print("  • Measuring cosmic ray flux (count rate)")
+print("  • Studying lead shielding attenuation")
+print("  • Comparing different lead thicknesses")
+print("  • Statistical analysis of cosmic ray events")
+print("\nThis is your PRIMARY measurement capability!")
+print("Example: Compare files 5181.root, 5182.root, 5183.root, 5184.root")
+print("         to see how coincidence rate changes with lead thickness")
+
+print("\n✓ 2. ENERGY/CHARGE MEASUREMENT - GOOD")
+print("-" * 80)
+print("You can reliably measure:")
+print("  • Energy deposition spectrum (charge distribution)")
+print("  • Landau distribution of energy loss")
+print("  • Particle identification (with sufficient statistics)")
+print("  • Quality cuts on events")
+print("\nUseful for understanding particle interactions in detectors")
+
+print("\n✓ 3. DETECTOR PERFORMANCE - GOOD")
+print("-" * 80)
+print("You can monitor:")
+print("  • Detector noise levels (RMS)")
+print("  • Signal-to-noise ratio")
+print("  • Baseline stability")
+print("  • Trigger efficiency")
+print("\nUseful for detector calibration and quality control")
+
+print("\n△ 4. ANGULAR DISTRIBUTION - POSSIBLE (with caveats)")
+print("-" * 80)
+print("With multiple measurements:")
+print("  △ Can estimate angular dependence (cos²θ)")
+print("  △ Requires careful geometry calibration")
+print("  △ Limited by detector acceptance")
+
+print("\n✗ 5. VELOCITY MEASUREMENT - NOT POSSIBLE")
+print("-" * 80)
+print("Cannot measure velocity because:")
+print("  ✗ Distance too short (16 cm)")
+print("  ✗ Sampling rate too low (250 MS/s)")
+print("  ✗ Expected time: 0.54 ns << Sampling interval: 4 ns")
+print("\nWould need:")
+print("  • Distance ≥ 2.4 m (with current sampling rate)")
+print("  • OR sampling rate ≥ 1 GHz (with current distance)")
+
+print("\n" + "=" * 80)
+print("RECOMMENDED ANALYSIS: LEAD ATTENUATION STUDY")
+print("=" * 80)
+
+print("\nYour 4 files likely represent different lead thicknesses.")
+print("You can measure the attenuation coefficient:")
+print("\n  N(x) = N₀ × exp(-μx)")
+print("\nWhere:")
+print("  N(x) = coincidence count at thickness x")
+print("  N₀   = coincidence count without lead")
+print("  μ    = attenuation coefficient")
+print("  x    = lead thickness")
+
+print("\nSteps:")
+print("  1. Run analyze_cosmic_rays.py on each file")
+print("  2. Record coincidence counts for each")
+print("  3. Plot log(N) vs thickness")
+print("  4. Fit linear regression to get μ")
+print("  5. Compare with theoretical predictions")
+
+print("\n" + "=" * 80)
