@@ -1,0 +1,3 @@
+model,x_unit,lambda_eff_mm,sigma_lambda_eff_mm,chi2,ndf,chi2_ndf,rate_unit,r0_counts_per_hour,sigma_r0_counts_per_hour
+Transmission(x) = exp(-x / lambda_eff),mm,137.44754125274466,34.845099946979914,1.0053312866029898,3,0.33511042886766323,,,
+R_coin(x) = R0 * exp(-x / lambda_eff),mm,168.09143353120484,62.019151149112346,1.4024280941627956,2,0.7012140470813978,counts/hour,3306.036319586126,67.14489703434917

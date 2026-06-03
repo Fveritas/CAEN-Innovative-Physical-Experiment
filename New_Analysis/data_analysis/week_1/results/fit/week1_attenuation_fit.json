@@ -1,0 +1,23 @@
+[
+  {
+    "model": "Transmission(x) = exp(-x / lambda_eff)",
+    "x_unit": "mm",
+    "lambda_eff_mm": 137.44754125274466,
+    "sigma_lambda_eff_mm": 34.845099946979914,
+    "chi2": 1.0053312866029898,
+    "ndf": 3,
+    "chi2_ndf": 0.33511042886766323
+  },
+  {
+    "model": "R_coin(x) = R0 * exp(-x / lambda_eff)",
+    "x_unit": "mm",
+    "rate_unit": "counts/hour",
+    "r0_counts_per_hour": 3306.036319586126,
+    "sigma_r0_counts_per_hour": 67.14489703434917,
+    "lambda_eff_mm": 168.09143353120484,
+    "sigma_lambda_eff_mm": 62.019151149112346,
+    "chi2": 1.4024280941627956,
+    "ndf": 2,
+    "chi2_ndf": 0.7012140470813978
+  }
+]

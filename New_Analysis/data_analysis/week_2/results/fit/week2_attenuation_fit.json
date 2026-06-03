@@ -1,0 +1,25 @@
+[
+  {
+    "model": "Transmission(x) = exp(-x / lambda_eff)",
+    "x_unit": "mm",
+    "lambda_eff_mm": 188.2285010017239,
+    "sigma_lambda_eff_mm": 33.902382291378544,
+    "chi2": 7.151066458191894,
+    "ndf": 3,
+    "chi2_ndf": 2.3836888193972983,
+    "note": "Week 2 fit is empirical because week-2 data show possible systematic effects."
+  },
+  {
+    "model": "R_coin(x) = R0 * exp(-x / lambda_eff)",
+    "x_unit": "mm",
+    "rate_unit": "counts/hour",
+    "r0_counts_per_hour": 1781.1946621725335,
+    "sigma_r0_counts_per_hour": 50.63389383891581,
+    "lambda_eff_mm": 239.47095664124598,
+    "sigma_lambda_eff_mm": 75.59154845222022,
+    "chi2": 12.72744151594831,
+    "ndf": 2,
+    "chi2_ndf": 6.363720757974155,
+    "note": "Week 2 coin/hour fit is empirical because week-2 data show possible systematic effects."
+  }
+]

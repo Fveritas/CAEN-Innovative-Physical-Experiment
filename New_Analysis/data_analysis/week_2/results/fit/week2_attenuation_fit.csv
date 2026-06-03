@@ -1,0 +1,3 @@
+model,x_unit,lambda_eff_mm,sigma_lambda_eff_mm,chi2,ndf,chi2_ndf,note,rate_unit,r0_counts_per_hour,sigma_r0_counts_per_hour
+Transmission(x) = exp(-x / lambda_eff),mm,188.2285010017239,33.902382291378544,7.151066458191894,3,2.3836888193972983,Week 2 fit is empirical because week-2 data show possible systematic effects.,,,
+R_coin(x) = R0 * exp(-x / lambda_eff),mm,239.47095664124598,75.59154845222022,12.72744151594831,2,6.363720757974155,Week 2 coin/hour fit is empirical because week-2 data show possible systematic effects.,counts/hour,1781.1946621725335,50.63389383891581
