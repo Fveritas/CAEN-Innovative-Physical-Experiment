@@ -371,9 +371,16 @@ def plot_area_distributions(
         area2 = np.asarray(run_data[run]["area2"])
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        hist = ax.hist2d(area, area2, bins=100, range=[[0, 120], [0, 120]], cmap="viridis")
-        ax.axvline(AREA_THRESHOLD, color="white", linestyle=":")
-        ax.axhline(AREA2_THRESHOLD, color="white", linestyle=":")
+        hist = ax.hist2d(
+            area,
+            area2,
+            bins=100,
+            range=[[0, 120], [0, 120]],
+            cmap="Reds",
+            vmin=0,
+        )
+        ax.axvline(AREA_THRESHOLD, color="black", linestyle=":")
+        ax.axhline(AREA2_THRESHOLD, color="black", linestyle=":")
         ax.set_xlabel("area")
         ax.set_ylabel("area2")
         ax.set_title(f"Week 2 area vs area2: run {run}")

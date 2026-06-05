@@ -219,10 +219,11 @@ def plot_baseline_spectra(npz_dir: Path, figure_dir: Path) -> None:
             data["area2"],
             bins=100,
             range=[[0, 120], [0, 120]],
-            cmap="viridis",
+            cmap="Reds",
+            vmin=0,
         )
-        ax.axvline(30, color="white", linestyle=":")
-        ax.axhline(30, color="white", linestyle=":")
+        ax.axvline(30, color="black", linestyle=":")
+        ax.axhline(30, color="black", linestyle=":")
         ax.set_title(title)
         ax.set_xlabel("area")
         fig.colorbar(hist[3], ax=ax, label="Counts")
