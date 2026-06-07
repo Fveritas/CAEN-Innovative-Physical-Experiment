@@ -41,11 +41,18 @@ COMBINED_ANALYSIS_PLAN.md
 combined_week_analysis.py
 ```
 
+对 `Coin/Up` 归一化后再乘旧 0 片缩放因子的综合曲线，可继续运行经验指数拟合脚本：
+
+```text
+fit_normalized_scaled_analysis.py
+```
+
 运行方式：
 
 ```bash
 cd /home/guiyu/workspace/CAEN/New_Analysis
 python3 data_analysis/combined_analysis/combined_week_analysis.py
+python3 data_analysis/combined_analysis/fit_normalized_scaled_analysis.py
 ```
 
 ## 关键观察
@@ -162,6 +169,8 @@ results/tables/combined_coin_up_normalized_summary.csv
 | `results/figures/raw_coin_rate_combined.png` | 原始 `coin/hour` 随铅厚度变化的跨周拼接图。该图用于直观看出第一周和第二周绝对符合率基准不同，只能作为系统差异诊断图，不能直接用于物理拟合。 |
 | `results/figures/coin_up_normalized_rate_combined.png` | 使用 `Coin/Up * N_up(5181)` 得到的上探测器归一化符合率图。该图用于比较统一上探测器候选事件规模后的有效符合趋势。 |
 | `results/figures/coin_up_normalized_transmission_combined.png` | 将 `Coin/Up` 归一化符合率再除以第一周 0 片基准得到的相对趋势图。第二周 40、50、60 片在该图中基本为平台。 |
+| `results/figures/coin_up_normalized_then_scaled_rate_combined.png` | 在 `Coin/Up * N_up(5181)` 基础上，对第二周再乘旧 0 片符合率缩放因子 `3357/1831` 后的综合计数率图。 |
+| `results/figures/coin_up_normalized_then_scaled_transmission_combined.png` | 上述“归一化后再缩放”结果相对第一周 0 片基准的透过率图。 |
 | `results/figures/week_transmission_comparison.png` | 第一周和第二周分别以各自 0 片基准归一化后的 `Transmission` 对比图。这是最保守的跨周展示方式，不强行假设两周探测器响应一致。 |
 | `results/figures/zero_lead_area_comparison.png` | 第一周 0 片 `5181` 与第二周 0 片 `51811` 的上探测器 `area` 分布对比。用于检查上探测器脉冲积分响应是否跨周变化。 |
 | `results/figures/zero_lead_area2_comparison.png` | 第一周 0 片与第二周 0 片的下探测器 `area2` 分布对比。该图是判断第二周下探测器响应降低的重要证据。 |
@@ -170,6 +179,43 @@ results/tables/combined_coin_up_normalized_summary.csv
 | `results/figures/conditional_coin_ratio_comparison.png` | `Coin/Up` 和 `Coin/Down` 随铅厚度变化的图。用于比较条件符合概率，判断跨周差异是否主要来自探测器效率或几何符合效率变化。 |
 
 总结来说，`raw_coin_rate_combined.png`、`zero_lead_area*_comparison.png`、`detector_pass_fraction_comparison.png` 和 `conditional_coin_ratio_comparison.png` 主要是系统诊断图；`coin_up_normalized_rate_combined.png`、`coin_up_normalized_transmission_combined.png` 和 `week_transmission_comparison.png` 可用于讨论归一化后的铅板阻挡趋势。
+
+## 归一化后再缩放的经验指数拟合
+
+拟合对象为：
+
+```text
+R_scaled_norm = (N_coin / N_up) * N_up(5181) * k_week
+```
+
+其中 Week 1 的 `k_week = 1`，Week 2 的 `k_week = 3357 / 1831 = 1.833424`。拟合时使用第一周 0、10、20、30 片和第二周 40、50、60 片；第二周 0 片 `51811` 是定义跨周缩放的诊断点，未放入 0--60 片趋势拟合。
+
+已生成拟合输出：
+
+```text
+results/fit_normalized_scaled/normalized_scaled_exponential_fits.csv
+results/fit_normalized_scaled/normalized_scaled_exponential_fits.json
+results/fit_normalized_scaled/normalized_scaled_fit_input.csv
+results/fit_normalized_scaled/normalized_scaled_transmission_fit.png
+results/fit_normalized_scaled/normalized_scaled_rate_fit.png
+results/fit_normalized_scaled/normalized_scaled_transmission_log_fit.png
+results/fit_normalized_scaled/normalized_scaled_rate_log_fit.png
+results/fit_normalized_scaled/normalized_scaled_transmission_offset_exp_fit.png
+results/fit_normalized_scaled/normalized_scaled_rate_offset_exp_fit.png
+results/fit_normalized_scaled/normalized_scaled_transmission_offset_exp_log_fit.png
+results/fit_normalized_scaled/normalized_scaled_rate_offset_exp_log_fit.png
+```
+
+经验指数模型结果为：
+
+| 拟合对象 | 模型 | `lambda_eff` | `R^2` | `chi2/ndf` | AIC |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 归一化透过率 | `T(x) = exp(-x/lambda_eff)` | 168.57 mm | 0.333 | 4.973 | 31.84 |
+| 归一化后再缩放计数率 | `R(x) = R0 exp(-x/lambda_eff)` | 243.17 mm | 0.645 | 3.514 | 21.57 |
+| 归一化透过率平台模型 | `T(x) = T_inf + A exp(-x/lambda_eff)` | 5.91 mm | 0.988 | 0.142 | 6.57 |
+| 归一化后再缩放计数率平台模型 | `R(x) = R_inf + A exp(-x/lambda_eff)` | 5.91 mm | 0.988 | 0.142 | 6.57 |
+
+单指数模型给出 `10^2 mm` 量级的有效衰减长度，但 `chi2/ndf` 明显大于 1，说明“归一化后再缩放”的跨周曲线不能被简单单指数很好描述。指数加常数的平台模型显著降低 `chi2`、AIC 和 BIC，说明它更贴近“前段下降、厚铅板区间平台”的数据形状。由于该模型参数更多且样本点较少，平台模型应作为经验描述，不应把 `lambda_eff = 5.91 mm` 解释为铅材料的真实吸收长度。
 
 ## 报告结论方向
 

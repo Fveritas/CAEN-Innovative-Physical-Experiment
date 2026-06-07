@@ -134,8 +134,12 @@ def build_combined_table(week1: pd.DataFrame, week2: pd.DataFrame) -> tuple[pd.D
     """构建原始与 Coin/Up 归一化后的跨周综合表。"""
 
     baseline1 = week1.loc[week1["lead_plates"] == 0].iloc[0]
+    baseline2 = week2.loc[week2["lead_plates"] == 0].iloc[0]
     reference_n_up = float(baseline1["n_up"])
     reference_n_coin = float(baseline1["n_coin"])
+    zero_lead_coin_scale = (
+        float(baseline1["r_coin_per_hour"]) / float(baseline2["r_coin_per_hour"])
+    )
 
     combined = pd.concat([week1, week2], ignore_index=True).sort_values(
         ["lead_thickness_mm", "week", "run"]
@@ -154,6 +158,23 @@ def build_combined_table(week1: pd.DataFrame, week2: pd.DataFrame) -> tuple[pd.D
     combined["coin_up_normalized_blocking_to_week1"] = (
         1.0 - combined["coin_up_normalized_transmission_to_week1"]
     )
+    combined["zero_lead_coin_scale_factor"] = np.where(
+        combined["week"] == 2, zero_lead_coin_scale, 1.0
+    )
+    combined["r_coin_up_normalized_then_scaled"] = (
+        combined["r_coin_up_normalized_to_week1"]
+        * combined["zero_lead_coin_scale_factor"]
+    )
+    combined["sigma_r_coin_up_normalized_then_scaled"] = (
+        combined["sigma_r_coin_up_normalized_to_week1"]
+        * combined["zero_lead_coin_scale_factor"]
+    )
+    combined["coin_up_normalized_then_scaled_transmission"] = (
+        combined["r_coin_up_normalized_then_scaled"] / reference_n_coin
+    )
+    combined["coin_up_normalized_then_scaled_blocking"] = (
+        1.0 - combined["coin_up_normalized_then_scaled_transmission"]
+    )
     combined["week_label"] = combined["week"].map({1: "Week 1", 2: "Week 2"})
     return combined, reference_n_up
 
@@ -171,6 +192,10 @@ def normalization_comparison(combined: pd.DataFrame) -> pd.DataFrame:
         "r_coin_up_normalized_to_week1",
         "coin_up_normalized_transmission_to_week1",
         "coin_up_normalized_blocking_to_week1",
+        "zero_lead_coin_scale_factor",
+        "r_coin_up_normalized_then_scaled",
+        "coin_up_normalized_then_scaled_transmission",
+        "coin_up_normalized_then_scaled_blocking",
         "coin_over_down",
         "area_mean",
         "area2_mean",
@@ -358,6 +383,49 @@ def plot_combined_rates(combined: pd.DataFrame, figure_dir: Path) -> None:
     ax.legend()
     fig.tight_layout()
     fig.savefig(figure_dir / "coin_up_normalized_transmission_combined.png", dpi=200)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for week, group in combined.groupby("week"):
+        ax.errorbar(
+            group["lead_thickness_mm"],
+            group["r_coin_up_normalized_then_scaled"],
+            yerr=group["sigma_r_coin_up_normalized_then_scaled"],
+            marker=marker[week],
+            linestyle="none",
+            capsize=4,
+            label=f"Week {week}",
+        )
+    ax.set_xlabel("Lead thickness (mm)")
+    ax.set_ylabel("Coin/Up normalized then scaled rate (counts/hour)")
+    ax.set_title("Coin/Up normalized rates with zero-lead scale applied")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(
+        figure_dir / "coin_up_normalized_then_scaled_rate_combined.png", dpi=200
+    )
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for week, group in combined.groupby("week"):
+        ax.plot(
+            group["lead_thickness_mm"],
+            group["coin_up_normalized_then_scaled_transmission"],
+            marker=marker[week],
+            linestyle="none",
+            label=f"Week {week}",
+        )
+    ax.set_xlabel("Lead thickness (mm)")
+    ax.set_ylabel("Normalized then scaled transmission")
+    ax.set_title("Coin/Up normalized transmission with zero-lead scale applied")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(
+        figure_dir / "coin_up_normalized_then_scaled_transmission_combined.png",
+        dpi=200,
+    )
     plt.close(fig)
 
 
