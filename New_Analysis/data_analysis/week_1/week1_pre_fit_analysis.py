@@ -62,6 +62,10 @@ class RunStats:
     sigma_coin_over_up: float
     coin_over_down: float
     sigma_coin_over_down: float
+    r_coin_times_coin_over_up: float
+    sigma_r_coin_times_coin_over_up: float
+    r_coin_times_coin_over_down: float
+    sigma_r_coin_times_coin_over_down: float
     transmission: float
     sigma_transmission: float
     blocking: float
@@ -140,6 +144,18 @@ def binomial_sigma(successes: int, trials: int) -> float:
     return float(np.sqrt(p * (1.0 - p) / trials))
 
 
+def product_sigma(value_a: float, sigma_a: float, value_b: float, sigma_b: float) -> float:
+    """两个独立量乘积的误差传播。"""
+
+    if value_a == 0 or value_b == 0:
+        return float("nan")
+    product = value_a * value_b
+    return float(
+        abs(product)
+        * np.sqrt((sigma_a / value_a) ** 2 + (sigma_b / value_b) ** 2)
+    )
+
+
 def compute_basic_counts(data: dict[str, np.ndarray]) -> dict[str, int | np.ndarray]:
     """在固定阈值下计算上下探测器和符合事件。"""
 
@@ -183,6 +199,25 @@ def compute_stats(
 
     coin_over_up = n_coin / n_up if n_up else float("nan")
     coin_over_down = n_coin / n_down if n_down else float("nan")
+    sigma_coin_over_up = binomial_sigma(n_coin, n_up)
+    sigma_coin_over_down = binomial_sigma(n_coin, n_down)
+    sigma_r_coin_per_hour = n_coin * rel_err_rate
+    sigma_r_coin_hz = r_coin_hz * rel_err_rate
+
+    r_coin_times_coin_over_up = r_coin_per_hour * coin_over_up
+    r_coin_times_coin_over_down = r_coin_per_hour * coin_over_down
+    sigma_r_coin_times_coin_over_up = product_sigma(
+        r_coin_per_hour,
+        sigma_r_coin_per_hour,
+        coin_over_up,
+        sigma_coin_over_up,
+    )
+    sigma_r_coin_times_coin_over_down = product_sigma(
+        r_coin_per_hour,
+        sigma_r_coin_per_hour,
+        coin_over_down,
+        sigma_coin_over_down,
+    )
 
     transmission = n_coin / baseline_n_coin if baseline_n_coin else float("nan")
     rel_err_transmission = float(
@@ -206,15 +241,19 @@ def compute_stats(
         n_coin=n_coin,
         r_coin_per_hour=r_coin_per_hour,
         r_coin_hz=r_coin_hz,
-        sigma_r_coin_per_hour=n_coin * rel_err_rate,
-        sigma_r_coin_hz=r_coin_hz * rel_err_rate,
+        sigma_r_coin_per_hour=sigma_r_coin_per_hour,
+        sigma_r_coin_hz=sigma_r_coin_hz,
         up_fraction=n_up / n_total if n_total else float("nan"),
         down_fraction=n_down / n_total if n_total else float("nan"),
         coin_fraction=n_coin / n_total if n_total else float("nan"),
         coin_over_up=coin_over_up,
-        sigma_coin_over_up=binomial_sigma(n_coin, n_up),
+        sigma_coin_over_up=sigma_coin_over_up,
         coin_over_down=coin_over_down,
-        sigma_coin_over_down=binomial_sigma(n_coin, n_down),
+        sigma_coin_over_down=sigma_coin_over_down,
+        r_coin_times_coin_over_up=r_coin_times_coin_over_up,
+        sigma_r_coin_times_coin_over_up=sigma_r_coin_times_coin_over_up,
+        r_coin_times_coin_over_down=r_coin_times_coin_over_down,
+        sigma_r_coin_times_coin_over_down=sigma_r_coin_times_coin_over_down,
         transmission=transmission,
         sigma_transmission=sigma_transmission,
         blocking=1.0 - transmission,
@@ -313,6 +352,34 @@ def plot_rate_curves(df: pd.DataFrame, figure_dir: Path) -> None:
     ax.legend()
     fig.tight_layout()
     fig.savefig(figure_dir / "week1_normalized_coin_ratios.png", dpi=200)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.errorbar(
+        x,
+        df["r_coin_times_coin_over_up"],
+        yerr=df["sigma_r_coin_times_coin_over_up"],
+        marker="o",
+        linestyle="-",
+        capsize=4,
+        label="Coin rate x Coin/Up",
+    )
+    ax.errorbar(
+        x,
+        df["r_coin_times_coin_over_down"],
+        yerr=df["sigma_r_coin_times_coin_over_down"],
+        marker="s",
+        linestyle="--",
+        capsize=4,
+        label="Coin rate x Coin/Down",
+    )
+    ax.set_xlabel("Lead thickness (mm)")
+    ax.set_ylabel("Weighted coincidence rate (counts/hour)")
+    ax.set_title("Week 1 coincidence rate weighted by conditional ratio")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(figure_dir / "week1_conditional_weighted_coin_rate.png", dpi=200)
     plt.close(fig)
 
 

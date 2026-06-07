@@ -6,8 +6,8 @@
 2. 比较两周 0 片铅板基准；
 3. 检查上下探测器通过率、Coin/Up、Coin/Down 和脉冲积分响应差异；
 4. 分析可能的探测器响应漂移；
-5. 使用 0 片基准缩放第二周 coin/hour；
-6. 给出缩放后 0-60 片铅板的综合趋势和归一化结果。
+5. 使用 Coin/Up 乘以 Week 1 零铅板 N_up 构造上探测器归一化符合率；
+6. 给出 0-60 片铅板的条件归一化综合趋势。
 """
 
 from __future__ import annotations
@@ -131,33 +131,35 @@ def baseline_comparison(week1: pd.DataFrame, week2: pd.DataFrame) -> pd.DataFram
 
 
 def build_combined_table(week1: pd.DataFrame, week2: pd.DataFrame) -> tuple[pd.DataFrame, float]:
-    """构建原始与 0 片缩放后的跨周综合表。"""
+    """构建原始与 Coin/Up 归一化后的跨周综合表。"""
 
     baseline1 = week1.loc[week1["lead_plates"] == 0].iloc[0]
-    baseline2 = week2.loc[week2["lead_plates"] == 0].iloc[0]
-    scale = baseline1["r_coin_per_hour"] / baseline2["r_coin_per_hour"]
+    reference_n_up = float(baseline1["n_up"])
+    reference_n_coin = float(baseline1["n_coin"])
 
     combined = pd.concat([week1, week2], ignore_index=True).sort_values(
         ["lead_thickness_mm", "week", "run"]
     )
     combined["is_zero_lead_baseline"] = combined["lead_plates"] == 0
-    combined["scale_to_week1"] = np.where(combined["week"] == 2, scale, 1.0)
-    combined["r_coin_scaled_to_week1"] = (
-        combined["r_coin_per_hour"] * combined["scale_to_week1"]
+    combined["coin_up_reference_n_up"] = reference_n_up
+    combined["r_coin_up_normalized_to_week1"] = (
+        combined["coin_over_up"] * reference_n_up
     )
-    combined["sigma_r_coin_scaled_to_week1"] = (
-        combined["sigma_r_coin_per_hour"] * combined["scale_to_week1"]
+    combined["sigma_r_coin_up_normalized_to_week1"] = (
+        combined["sigma_coin_over_up"] * reference_n_up
     )
-    combined["scaled_transmission_to_week1"] = (
-        combined["r_coin_scaled_to_week1"] / baseline1["r_coin_per_hour"]
+    combined["coin_up_normalized_transmission_to_week1"] = (
+        combined["r_coin_up_normalized_to_week1"] / reference_n_coin
     )
-    combined["scaled_blocking_to_week1"] = 1.0 - combined["scaled_transmission_to_week1"]
+    combined["coin_up_normalized_blocking_to_week1"] = (
+        1.0 - combined["coin_up_normalized_transmission_to_week1"]
+    )
     combined["week_label"] = combined["week"].map({1: "Week 1", 2: "Week 2"})
-    return combined, float(scale)
+    return combined, reference_n_up
 
 
 def normalization_comparison(combined: pd.DataFrame) -> pd.DataFrame:
-    """比较原始、0 片缩放和 Coin/Up 归一化结果。"""
+    """比较原始符合率和 Coin/Up 归一化结果。"""
 
     columns = [
         "week",
@@ -165,10 +167,10 @@ def normalization_comparison(combined: pd.DataFrame) -> pd.DataFrame:
         "lead_plates",
         "lead_thickness_mm",
         "r_coin_per_hour",
-        "r_coin_scaled_to_week1",
-        "scaled_transmission_to_week1",
-        "scaled_blocking_to_week1",
         "coin_over_up",
+        "r_coin_up_normalized_to_week1",
+        "coin_up_normalized_transmission_to_week1",
+        "coin_up_normalized_blocking_to_week1",
         "coin_over_down",
         "area_mean",
         "area2_mean",
@@ -296,7 +298,7 @@ def plot_detector_diagnostics(combined: pd.DataFrame, figure_dir: Path) -> None:
 
 
 def plot_combined_rates(combined: pd.DataFrame, figure_dir: Path) -> None:
-    """绘制原始和 0 片缩放后的跨周符合率。"""
+    """绘制原始和 Coin/Up 归一化后的跨周符合率。"""
 
     marker = {1: "o", 2: "s"}
 
@@ -324,38 +326,38 @@ def plot_combined_rates(combined: pd.DataFrame, figure_dir: Path) -> None:
     for week, group in combined.groupby("week"):
         ax.errorbar(
             group["lead_thickness_mm"],
-            group["r_coin_scaled_to_week1"],
-            yerr=group["sigma_r_coin_scaled_to_week1"],
+            group["r_coin_up_normalized_to_week1"],
+            yerr=group["sigma_r_coin_up_normalized_to_week1"],
             marker=marker[week],
             linestyle="none",
             capsize=4,
             label=f"Week {week}",
         )
     ax.set_xlabel("Lead thickness (mm)")
-    ax.set_ylabel("Scaled coincidence rate (counts/hour)")
-    ax.set_title("Zero-lead scaled cross-week rates")
+    ax.set_ylabel("Coin/Up normalized rate (counts/hour)")
+    ax.set_title("Coin/Up normalized cross-week rates")
     ax.grid(True, alpha=0.3)
     ax.legend()
     fig.tight_layout()
-    fig.savefig(figure_dir / "scaled_coin_rate_combined.png", dpi=200)
+    fig.savefig(figure_dir / "coin_up_normalized_rate_combined.png", dpi=200)
     plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(7, 5))
     for week, group in combined.groupby("week"):
         ax.plot(
             group["lead_thickness_mm"],
-            group["scaled_transmission_to_week1"],
+            group["coin_up_normalized_transmission_to_week1"],
             marker=marker[week],
             linestyle="none",
             label=f"Week {week}",
         )
     ax.set_xlabel("Lead thickness (mm)")
-    ax.set_ylabel("Scaled transmission to Week 1 baseline")
-    ax.set_title("Scaled 0-60 plate effective transmission")
+    ax.set_ylabel("Coin/Up normalized transmission to Week 1 baseline")
+    ax.set_title("Coin/Up normalized 0-60 plate effective transmission")
     ax.grid(True, alpha=0.3)
     ax.legend()
     fig.tight_layout()
-    fig.savefig(figure_dir / "scaled_transmission_combined.png", dpi=200)
+    fig.savefig(figure_dir / "coin_up_normalized_transmission_combined.png", dpi=200)
     plt.close(fig)
 
 
@@ -394,28 +396,13 @@ def main() -> None:
     baseline = baseline_comparison(week1, week2)
     baseline.to_csv(paths["tables"] / "baseline_comparison.csv", index=False)
 
-    combined, scale = build_combined_table(week1, week2)
-    combined.to_csv(paths["tables"] / "combined_scaled_summary.csv", index=False)
+    combined, reference_n_up = build_combined_table(week1, week2)
+    combined.to_csv(
+        paths["tables"] / "combined_coin_up_normalized_summary.csv", index=False
+    )
 
     norm = normalization_comparison(combined)
     norm.to_csv(paths["tables"] / "normalization_comparison.csv", index=False)
-
-    scale_table = pd.DataFrame(
-        [
-            {
-                "week1_baseline_run": "5181",
-                "week2_baseline_run": "51811",
-                "week1_baseline_coin_per_hour": float(
-                    week1.loc[week1["lead_plates"] == 0, "r_coin_per_hour"].iloc[0]
-                ),
-                "week2_baseline_coin_per_hour": float(
-                    week2.loc[week2["lead_plates"] == 0, "r_coin_per_hour"].iloc[0]
-                ),
-                "week2_to_week1_scale_factor": scale,
-            }
-        ]
-    )
-    scale_table.to_csv(paths["tables"] / "zero_lead_scale_factor.csv", index=False)
 
     plot_baseline_spectra(args.npz_dir, paths["figures"])
     plot_detector_diagnostics(combined, paths["figures"])
@@ -423,7 +410,7 @@ def main() -> None:
     plot_week_transmission(combined, paths["figures"])
 
     print("combined inter-week analysis completed")
-    print(f"scale factor week2 -> week1: {scale:.6f}")
+    print(f"Coin/Up reference N_up from Week 1 zero lead: {reference_n_up:.0f}")
     print(f"tables: {paths['tables']}")
     print(f"figures: {paths['figures']}")
 
